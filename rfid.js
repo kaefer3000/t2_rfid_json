@@ -55,12 +55,14 @@ app.get('/', function(req, res) {
     res.json({
       "@context" : {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : {
-          "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+//          "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+          "@type" : "http://www.w3.org/2001/XMLSchema#boolean"
          },
       },
       "@id": "#sensor" ,
       "@type" : "http://www.w3.org/ns/sosa/Sensor" ,
-      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards)
+//     "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards)
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards).length > 0
       }
     );
 })
