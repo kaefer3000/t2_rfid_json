@@ -3,11 +3,17 @@ var rfidlib = require('rfid-pn532');
 var express = require('express')
 var app = express()
 
+// specifying content type as JSON-LD
+app.use(function (req, res, next) {
+  res.header("Content-Type",'application/ld+json');
+  next();
+});
+
 // read as fast as possible
 var rfid = rfidlib.use(tessel.port['A'], { read: true, delay: 0 });
 
 // http port
-var httpPort = 8080;
+var httpPort = 80;
 
 // current card 
 var cards = new Object()
@@ -46,7 +52,17 @@ rfid.on('error', function(err) {
 });
 
 app.get('/', function(req, res) {
-    res.json(Object.keys(cards));
+    res.json({
+      "@context" : {
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : {
+          "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+         },
+      },
+      "@id": "#sensor" ,
+      "@type" : "http://www.w3.org/ns/sosa/Sensor" ,
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards)
+      }
+    );
 })
 
 app.listen(httpPort, function() {
