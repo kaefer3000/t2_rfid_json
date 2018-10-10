@@ -9,60 +9,120 @@ app.use(function (req, res, next) {
   next();
 });
 
-// read as fast as possible
-var rfid = rfidlib.use(tessel.port['A'], { read: true, delay: 0 });
-
 // http port
 var httpPort = 80;
 
+// read as fast as possible
+var rfidA = rfidlib.use(tessel.port['A'], { read: true, delay: 0 });
+var rfidA = rfidlib.use(tessel.port['B'], { read: true, delay: 0 });
+
 // current card 
-var cards = new Object()
+var cardsA = new Object()
+var cardsB = new Object()
 
 // last detected card
-var lastCardTime = 0;
+var lastCardTimeA = 0;
+var lastCardTimeB = 0;
 
 // triggers deletion from buffer
-var timeout = setInterval(increaseAge, 100);
+var timeoutA = setInterval(increaseAgeA, 100);
+var timeoutB = setInterval(increaseAgeB, 100);
 
-function increaseAge(force, except) {
-    if (new Date() - lastCardTime >= 50 || force) {
-        for (var key in cards) {
-            if (cards.hasOwnProperty(key) && key != except) {
-                cards[key] += 1;
-                if (cards[key] > 3) {
-                    delete cards[key];
+function increaseAgeA(force, except) {
+    if (new Date() - lastCardTimeA >= 50 || force) {
+        for (var key in cardsA) {
+            if (cardsB.hasOwnProperty(key) && key != except) {
+                cardsA[key] += 1;
+                if (cardsA[key] > 3) {
+                    delete cardsA[key];
+                }
+            }
+        }
+    }
+}
+function increaseAgeB(force, except) {
+    if (new Date() - lastCardTimeB >= 50 || force) {
+        for (var key in cardsB) {
+            if (cardsB.hasOwnProperty(key) && key != except) {
+                cardsB[key] += 1;
+                if (cardsB[key] > 3) {
+                    delete cardsB[key];
                 }
             }
         }
     }
 }
 
-rfid.on('ready', function(version) {
-    console.log('Ready to read RFID card');
-    rfid.on('data', function(card) {
+
+
+rfidA.on('ready', function(version) {
+    console.log('Ready to read RFID card on port A');
+    rfidA.on('data', function(card) {
         var cardId = card.uid.toString('hex');
-        lastCardTime = (+new Date());
-        cards[cardId] = 0;
-        increaseAge(true, cardId)
+        lastCardTimeA = (+new Date());
+        cardsA[cardId] = 0;
+        increaseAgeA(true, cardId)
+    });
+});
+rfidB.on('ready', function(version) {
+    console.log('Ready to read RFID card on port B');
+    rfidB.on('data', function(card) {
+        var cardId = card.uid.toString('hex');
+        lastCardTimeB = (+new Date());
+        cardsB[cardId] = 0;
+        increaseAgeB(true, cardId)
     });
 });
 
-rfid.on('error', function(err) {
+rfidA.on('error', function(err) {
+    console.error(err);
+});
+rfidB.on('error', function(err) {
     console.error(err);
 });
 
 app.get('/', function(req, res) {
     res.json({
       "@context" : {
+        "http://www.w3.org/ns/sosa/hosts" : {
+//        "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+          "@type" : "@id"
+         },
+      },
+      "@id": "#it" ,
+      "@type" : "http://www.w3.org/ns/sosa/Platform" ,
+      "http://www.w3.org/ns/sosa/hosts" : [ "A#sensor" , "B#sensor" ]
+      }
+    );
+})
+
+app.get('/A', function(req, res) {
+    res.json({
+      "@context" : {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : {
-//          "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+//        "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
           "@type" : "http://www.w3.org/2001/XMLSchema#boolean"
          },
       },
       "@id": "#sensor" ,
       "@type" : "http://www.w3.org/ns/sosa/Sensor" ,
-//     "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards)
-      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cards).length > 0
+//    "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cardsA)
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cardsA).length > 0
+      }
+    );
+})
+app.get('/B', function(req, res) {
+    res.json({
+      "@context" : {
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : {
+//        "@type" : "http://www.w3.org/2001/XMLSchema#hexBinary"
+          "@type" : "http://www.w3.org/2001/XMLSchema#boolean"
+         },
+      },
+      "@id": "#sensor" ,
+      "@type" : "http://www.w3.org/ns/sosa/Sensor" ,
+//    "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cardsB)
+      "http://www.w3.org/1999/02/22-rdf-syntax-ns#value" : Object.keys(cardsB).length > 0
       }
     );
 })
