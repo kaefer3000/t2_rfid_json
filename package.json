@@ -2,14 +2,18 @@
   "name": "t2-rfid",
   "version": "0.0.1",
   "description": "Tessel RFID Reader with buffering for two cards and JSON Server interface",
-  "main": "index.js",
+  "main": "rfid.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": "www.github.com/slauber/t2-rfid",
+  "repository": "http://github.com/kaefer3000/t2_rfid_json",
   "keywords": [
     "Tessel"
   ],
+  "dependencies" : {
+    "express": "^4.14.0",
+    "rfid-pn532": "^0.1.9"
+  },
   "license": "MIT",
   "readme": "Tessel RFID Reader with buffering for two cards and JSON Server interface. Requires Tessel, rfid-pn532 and express."
 }
